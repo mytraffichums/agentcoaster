@@ -324,8 +324,18 @@ rl.on('line', (line) => {
 // ── STARTUP ───────────────────────────────────────────────────────────────────
 async function main() {
   console.log('[Clawbot] Connecting all agents...');
-  await Promise.all(Object.values(agentMap).map(a => a.connect()));
-  console.log('[Clawbot] All connected. Watching silently.\n');
+
+  await Promise.all(Object.entries(agentMap).map(async ([key, client]) => {
+    try {
+      await client.connect();
+      console.log(`[Clawbot] ${client.name} connected (${client.address})`);
+    } catch (e) {
+      console.error(`[Clawbot] ${client.name} failed to connect: ${e.message}`);
+      console.error(`[Clawbot] Check that ${key.toUpperCase()}_KEY is set in .env and the WS_URL is reachable`);
+    }
+  }));
+
+  console.log('[Clawbot] Ready. Watching silently.\n');
   rl.prompt();
 }
 
