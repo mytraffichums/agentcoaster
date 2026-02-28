@@ -27,6 +27,7 @@ export class AgentCoasterClient {
 
     this.currentPrice = 0;
     this.currentTick = 0;
+    this.currentSig = null;
     this.roundId = 0;
     this.priceHistory = [];
     this.roundActive = false;
@@ -84,6 +85,7 @@ export class AgentCoasterClient {
       case 'tick':
         this.currentTick = msg.tickIndex;
         this.currentPrice = msg.price;
+        this.currentSig = msg.sig;
         this.priceHistory.push(msg.price);
         this._tickCallbacks.forEach(cb => cb(msg));
         break;
@@ -155,8 +157,12 @@ export class AgentCoasterClient {
 
   async placeBet(direction, multiplier, wager) {
     const dir = direction === 'UP' ? 0 : 1;
+    const price = this.currentPrice;
+    const tick = this.currentTick;
+    const sig = this.currentSig;
+    if (!sig) throw new Error('No signed price available yet');
     console.log(`[${this.name}] Placing bet: ${direction} x${multiplier}, wager=${ethers.formatEther(wager)} ETH`);
-    const tx = await this.contract.placeBet(dir, multiplier, { value: wager });
+    const tx = await this.contract.placeBet(dir, multiplier, price, tick, sig, { value: wager });
     const receipt = await tx.wait();
     console.log(`[${this.name}] Bet placed, tx=${receipt.hash}`);
     return receipt;
@@ -168,8 +174,12 @@ export class AgentCoasterClient {
       console.log(`[${this.name}] No active bet to cash out`);
       return null;
     }
+    const price = this.currentPrice;
+    const tick = this.currentTick;
+    const sig = this.currentSig;
+    if (!sig) throw new Error('No signed price available');
     console.log(`[${this.name}] Cashing out bet ${betId}`);
-    const tx = await this.contract.cashOut(betId);
+    const tx = await this.contract.cashOut(betId, price, tick, sig);
     const receipt = await tx.wait();
     console.log(`[${this.name}] Cashed out, tx=${receipt.hash}`);
     return receipt;

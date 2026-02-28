@@ -1,688 +1,233 @@
 [
   {
     "type": "constructor",
-    "inputs": [
-      {
-        "name": "_operator",
-        "type": "address",
-        "internalType": "address"
-      }
+    "inputs": [{"name": "_operator", "type": "address", "internalType": "address"}],
+    "stateMutability": "nonpayable"
+  },
+  {"type": "receive", "stateMutability": "payable"},
+  {
+    "type": "function", "name": "BPS_SCALE",
+    "inputs": [], "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "FEE_BPS",
+    "inputs": [], "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "activeBet",
+    "inputs": [{"name": "", "type": "address", "internalType": "address"}],
+    "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "bets",
+    "inputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+    "outputs": [
+      {"name": "agent", "type": "address", "internalType": "address"},
+      {"name": "roundId", "type": "uint256", "internalType": "uint256"},
+      {"name": "direction", "type": "uint8", "internalType": "enum AgentCoaster.Direction"},
+      {"name": "multiplier", "type": "uint256", "internalType": "uint256"},
+      {"name": "wager", "type": "uint256", "internalType": "uint256"},
+      {"name": "entryPrice", "type": "uint256", "internalType": "uint256"},
+      {"name": "bustPrice", "type": "uint256", "internalType": "uint256"},
+      {"name": "entryTick", "type": "uint256", "internalType": "uint256"},
+      {"name": "active", "type": "bool", "internalType": "bool"}
     ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "cashOut",
+    "inputs": [
+      {"name": "betId", "type": "uint256", "internalType": "uint256"},
+      {"name": "price", "type": "uint256", "internalType": "uint256"},
+      {"name": "tick", "type": "uint256", "internalType": "uint256"},
+      {"name": "sig", "type": "bytes", "internalType": "bytes"}
+    ],
+    "outputs": [],
     "stateMutability": "nonpayable"
   },
   {
-    "type": "receive",
+    "type": "function", "name": "currentRound",
+    "inputs": [], "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "endRound",
+    "inputs": [
+      {"name": "seed", "type": "bytes32", "internalType": "bytes32"},
+      {"name": "finalPrice", "type": "uint256", "internalType": "uint256"},
+      {"name": "finalTick", "type": "uint256", "internalType": "uint256"},
+      {"name": "sig", "type": "bytes", "internalType": "bytes"}
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function", "name": "fund",
+    "inputs": [], "outputs": [],
     "stateMutability": "payable"
   },
   {
-    "type": "function",
-    "name": "BPS_SCALE",
-    "inputs": [],
+    "type": "function", "name": "getContractBalance",
+    "inputs": [], "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "getRoundBetIds",
+    "inputs": [{"name": "roundId", "type": "uint256", "internalType": "uint256"}],
+    "outputs": [{"name": "", "type": "uint256[]", "internalType": "uint256[]"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "leaderboard",
+    "inputs": [{"name": "", "type": "address", "internalType": "address"}],
     "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
+      {"name": "totalPnL", "type": "int256", "internalType": "int256"},
+      {"name": "wins", "type": "uint256", "internalType": "uint256"},
+      {"name": "losses", "type": "uint256", "internalType": "uint256"}
     ],
     "stateMutability": "view"
   },
   {
-    "type": "function",
-    "name": "FEE_BPS",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "PRICE_DECIMALS",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "PRICE_SCALE",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "activeBet",
+    "type": "function", "name": "liquidate",
     "inputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "bets",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "agent",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "roundId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "direction",
-        "type": "uint8",
-        "internalType": "enum AgentCoaster.Direction"
-      },
-      {
-        "name": "multiplier",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "wager",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "entryPrice",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "bustPrice",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "entryTick",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "active",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "cashOut",
-    "inputs": [
-      {
-        "name": "betId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
+      {"name": "betId", "type": "uint256", "internalType": "uint256"},
+      {"name": "price", "type": "uint256", "internalType": "uint256"},
+      {"name": "tick", "type": "uint256", "internalType": "uint256"},
+      {"name": "sig", "type": "bytes", "internalType": "bytes"}
     ],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "currentRound",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
+    "type": "function", "name": "nextBetId",
+    "inputs": [], "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
     "stateMutability": "view"
   },
   {
-    "type": "function",
-    "name": "endRound",
+    "type": "function", "name": "operator",
+    "inputs": [], "outputs": [{"name": "", "type": "address", "internalType": "address"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "owner",
+    "inputs": [], "outputs": [{"name": "", "type": "address", "internalType": "address"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "placeBet",
     "inputs": [
-      {
-        "name": "seed",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "fund",
-    "inputs": [],
-    "outputs": [],
-    "stateMutability": "payable"
-  },
-  {
-    "type": "function",
-    "name": "getContractBalance",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "getRoundBetIds",
-    "inputs": [
-      {
-        "name": "roundId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256[]",
-        "internalType": "uint256[]"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "leaderboard",
-    "inputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "totalPnL",
-        "type": "int256",
-        "internalType": "int256"
-      },
-      {
-        "name": "wins",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "losses",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "liquidate",
-    "inputs": [
-      {
-        "name": "betId",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "currentPrice",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
-    "name": "nextBetId",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "operator",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "owner",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "placeBet",
-    "inputs": [
-      {
-        "name": "direction",
-        "type": "uint8",
-        "internalType": "uint8"
-      },
-      {
-        "name": "multiplier",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
+      {"name": "direction", "type": "uint8", "internalType": "uint8"},
+      {"name": "multiplier", "type": "uint256", "internalType": "uint256"},
+      {"name": "price", "type": "uint256", "internalType": "uint256"},
+      {"name": "tick", "type": "uint256", "internalType": "uint256"},
+      {"name": "sig", "type": "bytes", "internalType": "bytes"}
     ],
     "outputs": [],
     "stateMutability": "payable"
   },
   {
-    "type": "function",
-    "name": "roundBetIds",
+    "type": "function", "name": "roundBetIds",
     "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
+      {"name": "", "type": "uint256", "internalType": "uint256"},
+      {"name": "", "type": "uint256", "internalType": "uint256"}
     ],
+    "outputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function", "name": "rounds",
+    "inputs": [{"name": "", "type": "uint256", "internalType": "uint256"}],
     "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
+      {"name": "seedHash", "type": "bytes32", "internalType": "bytes32"},
+      {"name": "seed", "type": "bytes32", "internalType": "bytes32"},
+      {"name": "startTime", "type": "uint256", "internalType": "uint256"},
+      {"name": "state", "type": "uint8", "internalType": "enum AgentCoaster.RoundState"},
+      {"name": "finalPrice", "type": "uint256", "internalType": "uint256"}
     ],
     "stateMutability": "view"
   },
   {
-    "type": "function",
-    "name": "rounds",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "seedHash",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "seed",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      },
-      {
-        "name": "startTime",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "state",
-        "type": "uint8",
-        "internalType": "enum AgentCoaster.RoundState"
-      },
-      {
-        "name": "finalPrice",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "currentTick",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "currentPrice",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "setOperator",
-    "inputs": [
-      {
-        "name": "_operator",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
+    "type": "function", "name": "setOperator",
+    "inputs": [{"name": "_operator", "type": "address", "internalType": "address"}],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "startRound",
-    "inputs": [
-      {
-        "name": "seedHash",
-        "type": "bytes32",
-        "internalType": "bytes32"
-      }
-    ],
+    "type": "function", "name": "startRound",
+    "inputs": [{"name": "seedHash", "type": "bytes32", "internalType": "bytes32"}],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "submitTickPrice",
-    "inputs": [
-      {
-        "name": "tick",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "price",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
+    "type": "function", "name": "withdraw",
+    "inputs": [{"name": "amount", "type": "uint256", "internalType": "uint256"}],
     "outputs": [],
     "stateMutability": "nonpayable"
   },
   {
-    "type": "function",
-    "name": "tickPrices",
+    "type": "event", "name": "BetClosed",
     "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      },
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "withdraw",
-    "inputs": [
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "event",
-    "name": "BetClosed",
-    "inputs": [
-      {
-        "name": "betId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "pnl",
-        "type": "int256",
-        "indexed": false,
-        "internalType": "int256"
-      },
-      {
-        "name": "exitPrice",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
+      {"name": "betId", "type": "uint256", "indexed": true, "internalType": "uint256"},
+      {"name": "pnl", "type": "int256", "indexed": false, "internalType": "int256"},
+      {"name": "exitPrice", "type": "uint256", "indexed": false, "internalType": "uint256"}
     ],
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "BetLiquidated",
+    "type": "event", "name": "BetLiquidated",
     "inputs": [
-      {
-        "name": "betId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "bustPrice",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
+      {"name": "betId", "type": "uint256", "indexed": true, "internalType": "uint256"},
+      {"name": "bustPrice", "type": "uint256", "indexed": false, "internalType": "uint256"}
     ],
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "BetPlaced",
+    "type": "event", "name": "BetPlaced",
     "inputs": [
-      {
-        "name": "betId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "agent",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "direction",
-        "type": "uint8",
-        "indexed": false,
-        "internalType": "enum AgentCoaster.Direction"
-      },
-      {
-        "name": "multiplier",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "wager",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "entryPrice",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "bustPrice",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
+      {"name": "betId", "type": "uint256", "indexed": true, "internalType": "uint256"},
+      {"name": "agent", "type": "address", "indexed": true, "internalType": "address"},
+      {"name": "direction", "type": "uint8", "indexed": false, "internalType": "enum AgentCoaster.Direction"},
+      {"name": "multiplier", "type": "uint256", "indexed": false, "internalType": "uint256"},
+      {"name": "wager", "type": "uint256", "indexed": false, "internalType": "uint256"},
+      {"name": "entryPrice", "type": "uint256", "indexed": false, "internalType": "uint256"},
+      {"name": "bustPrice", "type": "uint256", "indexed": false, "internalType": "uint256"}
     ],
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "Funded",
+    "type": "event", "name": "Funded",
     "inputs": [
-      {
-        "name": "funder",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
+      {"name": "funder", "type": "address", "indexed": true, "internalType": "address"},
+      {"name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256"}
     ],
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "RoundEnded",
+    "type": "event", "name": "RoundEnded",
     "inputs": [
-      {
-        "name": "roundId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "seed",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "finalPrice",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
+      {"name": "roundId", "type": "uint256", "indexed": true, "internalType": "uint256"},
+      {"name": "seed", "type": "bytes32", "indexed": false, "internalType": "bytes32"},
+      {"name": "finalPrice", "type": "uint256", "indexed": false, "internalType": "uint256"}
     ],
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "RoundStarted",
+    "type": "event", "name": "RoundStarted",
     "inputs": [
-      {
-        "name": "roundId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "seedHash",
-        "type": "bytes32",
-        "indexed": false,
-        "internalType": "bytes32"
-      },
-      {
-        "name": "startTime",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
+      {"name": "roundId", "type": "uint256", "indexed": true, "internalType": "uint256"},
+      {"name": "seedHash", "type": "bytes32", "indexed": false, "internalType": "bytes32"},
+      {"name": "startTime", "type": "uint256", "indexed": false, "internalType": "uint256"}
     ],
     "anonymous": false
   },
   {
-    "type": "event",
-    "name": "TickPriceUpdated",
+    "type": "event", "name": "Withdrawn",
     "inputs": [
-      {
-        "name": "roundId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "tick",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      },
-      {
-        "name": "price",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
-    "name": "Withdrawn",
-    "inputs": [
-      {
-        "name": "owner",
-        "type": "address",
-        "indexed": true,
-        "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "indexed": false,
-        "internalType": "uint256"
-      }
+      {"name": "owner", "type": "address", "indexed": true, "internalType": "address"},
+      {"name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256"}
     ],
     "anonymous": false
   }

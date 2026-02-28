@@ -17,8 +17,6 @@ contract AgentCoaster {
         uint256 startTime;
         RoundState state;
         uint256 finalPrice;
-        uint256 currentTick;
-        uint256 currentPrice;
     }
 
     struct Bet {
@@ -44,11 +42,8 @@ contract AgentCoaster {
     mapping(address => AgentStats) public leaderboard;
     mapping(uint256 => uint256[]) public roundBetIds;
     mapping(address => uint256) public activeBet;
-    mapping(uint256 => mapping(uint256 => uint256)) public tickPrices;
 
-    uint256 public constant PRICE_DECIMALS = 2;
-    uint256 public constant PRICE_SCALE = 100;
-    uint256 public constant FEE_BPS = 500; // 5% = 500 bps
+    uint256 public constant FEE_BPS = 500;
     uint256 public constant BPS_SCALE = 10000;
 
     event RoundStarted(uint256 indexed roundId, bytes32 seedHash, uint256 startTime);
@@ -56,7 +51,6 @@ contract AgentCoaster {
     event BetClosed(uint256 indexed betId, int256 pnl, uint256 exitPrice);
     event BetLiquidated(uint256 indexed betId, uint256 bustPrice);
     event RoundEnded(uint256 indexed roundId, bytes32 seed, uint256 finalPrice);
-    event TickPriceUpdated(uint256 indexed roundId, uint256 tick, uint256 price);
     event Funded(address indexed funder, uint256 amount);
     event Withdrawn(address indexed owner, uint256 amount);
 
@@ -85,41 +79,32 @@ contract AgentCoaster {
             seed: bytes32(0),
             startTime: block.timestamp,
             state: RoundState.ACTIVE,
-            finalPrice: 0,
-            currentTick: 0,
-            currentPrice: 1000_00 // 1000.00 with 2 decimals
+            finalPrice: 0
         });
         emit RoundStarted(currentRound, seedHash, block.timestamp);
     }
 
-    function submitTickPrice(uint256 tick, uint256 price) external onlyOperator {
-        Round storage round = rounds[currentRound];
-        require(round.state == RoundState.ACTIVE, "Round not active");
-        require(tick > 0 && tick <= 120, "Invalid tick");
-
-        round.currentTick = tick;
-        round.currentPrice = price;
-        tickPrices[currentRound][tick] = price;
-        emit TickPriceUpdated(currentRound, tick, price);
-    }
-
-    function placeBet(uint8 direction, uint256 multiplier) external payable {
+    // Verify operator signed (roundId, tick, price) and place bet at that price
+    function placeBet(uint8 direction, uint256 multiplier, uint256 price, uint256 tick, bytes calldata sig) external payable {
         require(direction <= 1, "Invalid direction");
         require(multiplier >= 1 && multiplier <= 100, "Multiplier must be 1-100");
         require(msg.value > 0, "Wager required");
+        require(price > 0, "No price");
 
         Round storage round = rounds[currentRound];
         require(round.state == RoundState.ACTIVE, "Round not active");
         require(activeBet[msg.sender] == 0, "Already have active bet");
 
-        uint256 entryPrice = round.currentPrice;
-        require(entryPrice > 0, "No price available");
+        // Verify operator signature over (roundId, tick, price)
+        bytes32 hash = keccak256(abi.encodePacked(currentRound, tick, price));
+        bytes32 ethHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        require(_recoverSigner(ethHash, sig) == operator, "Invalid price signature");
 
         uint256 bustPrice;
         if (Direction(direction) == Direction.UP) {
-            bustPrice = entryPrice - (entryPrice / multiplier);
+            bustPrice = price - (price / multiplier);
         } else {
-            bustPrice = entryPrice + (entryPrice / multiplier);
+            bustPrice = price + (price / multiplier);
         }
 
         nextBetId++;
@@ -131,37 +116,36 @@ contract AgentCoaster {
             direction: Direction(direction),
             multiplier: multiplier,
             wager: msg.value,
-            entryPrice: entryPrice,
+            entryPrice: price,
             bustPrice: bustPrice,
-            entryTick: round.currentTick,
+            entryTick: tick,
             active: true
         });
 
         roundBetIds[currentRound].push(betId);
         activeBet[msg.sender] = betId;
 
-        emit BetPlaced(betId, msg.sender, Direction(direction), multiplier, msg.value, entryPrice, bustPrice);
+        emit BetPlaced(betId, msg.sender, Direction(direction), multiplier, msg.value, price, bustPrice);
     }
 
-    function cashOut(uint256 betId) external {
+    function cashOut(uint256 betId, uint256 price, uint256 tick, bytes calldata sig) external {
         Bet storage bet = bets[betId];
         require(bet.agent == msg.sender, "Not your bet");
         require(bet.active, "Bet not active");
+        require(rounds[bet.roundId].state == RoundState.ACTIVE, "Round not active");
 
-        Round storage round = rounds[bet.roundId];
-        require(round.state == RoundState.ACTIVE, "Round not active");
+        // Verify operator signed this price
+        bytes32 hash = keccak256(abi.encodePacked(currentRound, tick, price));
+        bytes32 ethHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        require(_recoverSigner(ethHash, sig) == operator, "Invalid price signature");
 
-        uint256 currentPrice = round.currentPrice;
-        (uint256 payout, int256 pnl) = _calculatePayout(bet, currentPrice);
+        (uint256 payout, int256 pnl) = _calculatePayout(bet, price);
 
         bet.active = false;
         activeBet[msg.sender] = 0;
 
-        if (pnl > 0) {
-            leaderboard[msg.sender].wins++;
-        } else {
-            leaderboard[msg.sender].losses++;
-        }
+        if (pnl > 0) { leaderboard[msg.sender].wins++; }
+        else { leaderboard[msg.sender].losses++; }
         leaderboard[msg.sender].totalPnL += pnl;
 
         if (payout > 0) {
@@ -169,17 +153,22 @@ contract AgentCoaster {
             require(sent, "Transfer failed");
         }
 
-        emit BetClosed(betId, pnl, currentPrice);
+        emit BetClosed(betId, pnl, price);
     }
 
-    function liquidate(uint256 betId, uint256 currentPrice) external onlyOperator {
+    function liquidate(uint256 betId, uint256 price, uint256 tick, bytes calldata sig) external onlyOperator {
         Bet storage bet = bets[betId];
         require(bet.active, "Bet not active");
 
+        // Verify signature so the price used for liquidation is authentic
+        bytes32 hash = keccak256(abi.encodePacked(currentRound, tick, price));
+        bytes32 ethHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        require(_recoverSigner(ethHash, sig) == operator, "Invalid price signature");
+
         if (bet.direction == Direction.UP) {
-            require(currentPrice <= bet.bustPrice, "Not busted (UP)");
+            require(price <= bet.bustPrice, "Not busted (UP)");
         } else {
-            require(currentPrice >= bet.bustPrice, "Not busted (DOWN)");
+            require(price >= bet.bustPrice, "Not busted (DOWN)");
         }
 
         bet.active = false;
@@ -191,41 +180,41 @@ contract AgentCoaster {
         emit BetLiquidated(betId, bet.bustPrice);
     }
 
-    function endRound(bytes32 seed) external onlyOperator {
+    function endRound(bytes32 seed, uint256 finalPrice, uint256 finalTick, bytes calldata sig) external onlyOperator {
         Round storage round = rounds[currentRound];
         require(round.state == RoundState.ACTIVE, "Round not active");
         require(keccak256(abi.encodePacked(seed)) == round.seedHash, "Invalid seed");
 
+        // Verify final price signature
+        bytes32 hash = keccak256(abi.encodePacked(currentRound, finalTick, finalPrice));
+        bytes32 ethHash = keccak256(abi.encodePacked("\x19Ethereum Signed Message:\n32", hash));
+        require(_recoverSigner(ethHash, sig) == operator, "Invalid price signature");
+
         round.seed = seed;
         round.state = RoundState.SETTLED;
-        round.finalPrice = round.currentPrice;
+        round.finalPrice = finalPrice;
 
-        // Settle all remaining active bets at final price
         uint256[] storage betIds = roundBetIds[currentRound];
         for (uint256 i = 0; i < betIds.length; i++) {
             Bet storage bet = bets[betIds[i]];
             if (bet.active) {
-                (uint256 payout, int256 pnl) = _calculatePayout(bet, round.finalPrice);
+                (uint256 payout, int256 pnl) = _calculatePayout(bet, finalPrice);
                 bet.active = false;
                 activeBet[bet.agent] = 0;
 
-                if (pnl > 0) {
-                    leaderboard[bet.agent].wins++;
-                } else {
-                    leaderboard[bet.agent].losses++;
-                }
+                if (pnl > 0) { leaderboard[bet.agent].wins++; }
+                else { leaderboard[bet.agent].losses++; }
                 leaderboard[bet.agent].totalPnL += pnl;
 
                 if (payout > 0) {
                     (bool sent,) = payable(bet.agent).call{value: payout}("");
                     require(sent, "Transfer failed");
                 }
-
-                emit BetClosed(betIds[i], pnl, round.finalPrice);
+                emit BetClosed(betIds[i], pnl, finalPrice);
             }
         }
 
-        emit RoundEnded(currentRound, seed, round.finalPrice);
+        emit RoundEnded(currentRound, seed, finalPrice);
     }
 
     function fund() external payable {
@@ -244,7 +233,6 @@ contract AgentCoaster {
         operator = _operator;
     }
 
-    // View functions
     function getRoundBetIds(uint256 roundId) external view returns (uint256[] memory) {
         return roundBetIds[roundId];
     }
@@ -253,24 +241,29 @@ contract AgentCoaster {
         return address(this).balance;
     }
 
-    // Internal
-    function _calculatePayout(Bet storage bet, uint256 currentPrice) internal view returns (uint256 payout, int256 pnl) {
-        int256 priceDiff;
-        if (bet.direction == Direction.UP) {
-            priceDiff = int256(currentPrice) - int256(bet.entryPrice);
-        } else {
-            priceDiff = int256(bet.entryPrice) - int256(currentPrice);
+    function _recoverSigner(bytes32 ethHash, bytes calldata sig) internal pure returns (address) {
+        require(sig.length == 65, "Invalid sig length");
+        bytes32 r; bytes32 s; uint8 v;
+        assembly {
+            r := calldataload(sig.offset)
+            s := calldataload(add(sig.offset, 32))
+            v := byte(0, calldataload(add(sig.offset, 64)))
         }
+        if (v < 27) v += 27;
+        return ecrecover(ethHash, v, r, s);
+    }
 
-        // pnl = wager * multiplier * priceDiff / entryPrice
+    function _calculatePayout(Bet storage bet, uint256 price) internal view returns (uint256 payout, int256 pnl) {
+        int256 priceDiff = bet.direction == Direction.UP
+            ? int256(price) - int256(bet.entryPrice)
+            : int256(bet.entryPrice) - int256(price);
+
         pnl = (int256(bet.wager) * int256(bet.multiplier) * priceDiff) / int256(bet.entryPrice);
 
         if (pnl > 0) {
-            // 5% fee on profit
             uint256 fee = uint256(pnl) * FEE_BPS / BPS_SCALE;
             payout = bet.wager + uint256(pnl) - fee;
         } else {
-            // No fee on loss
             int256 payoutSigned = int256(bet.wager) + pnl;
             payout = payoutSigned > 0 ? uint256(payoutSigned) : 0;
         }

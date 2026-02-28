@@ -34,6 +34,11 @@ export function getOperatorWallet() {
   return operatorWallet;
 }
 
+export async function signPrice(roundId, tick, price) {
+  const hash = ethers.solidityPackedKeccak256(['uint256', 'uint256', 'uint256'], [roundId, tick, price]);
+  return operatorWallet.signMessage(ethers.getBytes(hash));
+}
+
 export async function startRound(seedHash) {
   const tx = await contract.startRound(seedHash);
   const receipt = await tx.wait();
@@ -42,14 +47,9 @@ export async function startRound(seedHash) {
   return { roundId: Number(roundId), txHash: receipt.hash };
 }
 
-export async function submitTickPrice(tick, price) {
-  const tx = await contract.submitTickPrice(tick, price);
-  await tx.wait();
-}
-
-export async function liquidate(betId, currentPrice) {
+export async function liquidate(betId, price, tick, sig) {
   try {
-    const tx = await contract.liquidate(betId, currentPrice);
+    const tx = await contract.liquidate(betId, price, tick, sig);
     const receipt = await tx.wait();
     console.log(`[chain] Bet ${betId} liquidated, tx=${receipt.hash}`);
     return receipt;
@@ -59,8 +59,8 @@ export async function liquidate(betId, currentPrice) {
   }
 }
 
-export async function endRound(seed) {
-  const tx = await contract.endRound(seed);
+export async function endRound(seed, finalPrice, finalTick, sig) {
+  const tx = await contract.endRound(seed, finalPrice, finalTick, sig);
   const receipt = await tx.wait();
   console.log(`[chain] Round ended, tx=${receipt.hash}`);
   return receipt;

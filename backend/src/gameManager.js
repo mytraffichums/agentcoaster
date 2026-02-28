@@ -104,13 +104,6 @@ export async function startNewRound() {
 
   state = State.ACTIVE;
 
-  // Submit initial price (tick 0 is start price)
-  try {
-    await chain.submitTickPrice(1, pricePath[1]);
-  } catch (err) {
-    console.error('[game] Failed to submit tick 1 price:', err.message);
-  }
-
   broadcast({
     type: 'roundStart',
     roundId,
@@ -129,16 +122,20 @@ async function onTick() {
 
   const price = pricePath[currentTick];
 
+  // Sign price off-chain — agents use this signature when placing bets
+  const sig = await chain.signPrice(roundId, currentTick, price);
+
   broadcast({
     type: 'tick',
     roundId,
     tickIndex: currentTick,
     price,
+    sig,
     timestamp: Date.now(),
   });
 
   // Check busts
-  await checkBusts(price);
+  await checkBusts(price, currentTick, sig);
 
   currentTick++;
 
@@ -148,27 +145,17 @@ async function onTick() {
     await endCurrentRound();
     return;
   }
-
-  // Submit tick price on-chain every N ticks (not every tick, to save gas)
-  const isLastTick = currentTick >= config.roundTicks;
-  if (currentTick % config.priceSubmitInterval === 0 || isLastTick) {
-    try {
-      await chain.submitTickPrice(isLastTick ? config.roundTicks : currentTick, pricePath[isLastTick ? config.roundTicks : currentTick]);
-    } catch (err) {
-      console.error(`[game] Failed to submit tick ${currentTick} price:`, err.message);
-    }
-  }
 }
 
-async function checkBusts(price) {
+async function checkBusts(price, tick, sig) {
   for (const [betId, bet] of activeBets) {
     let busted = false;
-    if (bet.direction === 0 && price <= bet.bustPrice) busted = true; // UP bet busted
-    if (bet.direction === 1 && price >= bet.bustPrice) busted = true; // DOWN bet busted
+    if (bet.direction === 0 && price <= bet.bustPrice) busted = true;
+    if (bet.direction === 1 && price >= bet.bustPrice) busted = true;
 
     if (busted) {
       console.log(`[game] Bet ${betId} BUSTED at price ${price}, bust=${bet.bustPrice}`);
-      const receipt = await chain.liquidate(betId, price);
+      const receipt = await chain.liquidate(betId, price, tick, sig);
       if (receipt) {
         activeBets.delete(betId);
         broadcast({
@@ -189,7 +176,9 @@ async function endCurrentRound() {
   console.log(`[game] Ending round ${roundId}, final price=${finalPrice}`);
 
   try {
-    await chain.endRound(seedToHex(currentSeed));
+    const finalTick = config.roundTicks;
+    const finalSig = await chain.signPrice(roundId, finalTick, finalPrice);
+    await chain.endRound(seedToHex(currentSeed), finalPrice, finalTick, finalSig);
     clearRoundState();
   } catch (err) {
     console.error('[game] Failed to end round on-chain:', err.message);
