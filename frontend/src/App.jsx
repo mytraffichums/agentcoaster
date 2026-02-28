@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useWebSocket } from './hooks/useWebSocket';
 import { computeVolatility } from './utils/format';
-import PriceChart from './components/PriceChart';
+import PriceChart from './components/RollercoasterChart';
 import RoundInfo from './components/RoundInfo';
 import AgentPanel from './components/AgentPanel';
 import InfoPanel from './components/InfoPanel';

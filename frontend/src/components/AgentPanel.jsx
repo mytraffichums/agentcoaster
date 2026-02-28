@@ -58,6 +58,21 @@ export default function AgentPanel({ bets, currentPrice, agentFlavors, roundSumm
 
         return (
           <div key={bet.betId} className={cardClass} style={{ borderLeftColor: color }}>
+            {bet.active && isProfitable && pnlEth > 0 && (
+              <div className="particles">
+                <div className="particle" style={{ '--color': color }} />
+                <div className="particle" style={{ '--color': color }} />
+                <div className="particle" style={{ '--color': color }} />
+                <div className="particle" style={{ '--color': color }} />
+                <div className="particle" style={{ '--color': color }} />
+                <div className="particle" style={{ '--color': color }} />
+              </div>
+            )}
+            {bet.status === 'BUSTED' && (
+              <div className="bust-stamp">
+                <div className="bust-stamp-text">BUSTED</div>
+              </div>
+            )}
             <div className="agent-header">
               <span className="agent-icon">{getAgentEmoji(bet.agent)}</span>
               <span className="agent-name" style={{ color }}>{getAgentName(bet.agent)}</span>
