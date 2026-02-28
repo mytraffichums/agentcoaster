@@ -72,7 +72,12 @@ export async function startNewRound() {
     if (saved) {
       console.log(`[game] Recovering stuck round ${contractState.roundId} with saved seed...`);
       try {
-        await chain.endRound(saved.seed);
+        const savedSeedBytes = Buffer.from(saved.seed.replace('0x', ''), 'hex');
+        const recoveryPath = generateFullPath(savedSeedBytes, config.startPrice);
+        const finalPrice = recoveryPath[config.roundTicks];
+        const finalTick = config.roundTicks;
+        const finalSig = await chain.signPrice(contractState.roundId, finalTick, finalPrice);
+        await chain.endRound(saved.seed, finalPrice, finalTick, finalSig);
         clearRoundState();
         console.log(`[game] Stuck round settled. Starting fresh.`);
       } catch (err) {
@@ -80,7 +85,7 @@ export async function startNewRound() {
         return;
       }
     } else {
-      console.error('[game] Contract has an active round but no saved seed — redeploy the contract to recover.');
+      console.error('[game] Contract has an active round but no saved seed. Call POST /admin/settle with the seed, or redeploy the contract.');
       return;
     }
   }
@@ -236,4 +241,26 @@ export function onBetLiquidated(data) {
 
 export function getCurrentPrice() {
   return pricePath[currentTick] || config.startPrice;
+}
+
+// Returns the current round seed (hex) while a round is active — useful for admin recovery
+export function getCurrentSeed() {
+  return currentSeed ? seedToHex(currentSeed) : null;
+}
+
+// Force-settle a stuck on-chain round using a known seed, then go back to IDLE
+export async function forceSettle(seedHex) {
+  const contractState = await chain.getContractRoundState();
+  if (contractState.state !== 1) {
+    throw new Error(`Contract not in ACTIVE state (state=${contractState.state})`);
+  }
+  const seedBytes = Buffer.from(seedHex.replace('0x', ''), 'hex');
+  const path = generateFullPath(seedBytes, config.startPrice);
+  const finalPrice = path[config.roundTicks];
+  const finalTick = config.roundTicks;
+  const finalSig = await chain.signPrice(contractState.roundId, finalTick, finalPrice);
+  await chain.endRound(seedHex, finalPrice, finalTick, finalSig);
+  clearRoundState();
+  state = State.IDLE;
+  console.log(`[game] Force-settled round ${contractState.roundId}`);
 }
