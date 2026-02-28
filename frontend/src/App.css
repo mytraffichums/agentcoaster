@@ -308,6 +308,39 @@
   30%, 70% { transform: translateX(4px); }
 }
 
+/* ── Card scan — sweeping light on new bets ─────────────────────────────── */
+.agent-card.card-scan::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.12) 50%,
+    transparent 70%
+  );
+  transform: translateX(-100%);
+  animation: scanSweep 0.7s ease-out forwards;
+  pointer-events: none;
+  z-index: 5;
+}
+
+@keyframes scanSweep {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* ── Flash close — green pulse when bet cashes out ──────────────────────── */
+.agent-card.flash-close {
+  animation: flashClose 0.6s ease-out;
+}
+
+@keyframes flashClose {
+  0%   { box-shadow: 0 0 0px rgba(0, 230, 118, 0); }
+  25%  { box-shadow: 0 0 40px rgba(0, 230, 118, 0.9), inset 0 0 20px rgba(0, 230, 118, 0.2); }
+  100% { box-shadow: 0 0 0px rgba(0, 230, 118, 0); }
+}
+
 /* ── Particles — float up on winning cards ─────────────────────────────── */
 .particles {
   position: absolute;

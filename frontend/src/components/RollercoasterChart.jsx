@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { getAgentName, getAgentColor } from '../utils/agents';
 
-const PAD = { top: 30, right: 80, bottom: 30, left: 50 };
+const PAD = { top: 30, right: 80, bottom: 36, left: 50 };
 const SUPPORT_INTERVAL = 8;
 const CART_W = 38;
 const CART_H = 21;
@@ -11,7 +11,7 @@ function norm(v, min, max) {
   return max === min ? 0.5 : (v - min) / (max - min);
 }
 
-export default function RollercoasterChart({ priceHistory, bets }) {
+export default function RollercoasterChart({ priceHistory, bets, tick }) {
   const containerRef = useRef(null);
   const [dims, setDims] = useState({ width: 800, height: 400 });
 
@@ -52,30 +52,46 @@ export default function RollercoasterChart({ priceHistory, bets }) {
   const pts = prices.map((p, i) => ({ x: toX(i), y: toY(p) }));
   const poly = (arr) => arr.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
-  // Unit tangent at last point for cart rotation
+  // Tangent at last point for cart rotation
   const last = pts.length - 1;
-  const a = pts[Math.max(0, last - 1)];
-  const b = pts[last];
-  const dx = b.x - a.x, dy = b.y - a.y;
-  const len = Math.sqrt(dx * dx + dy * dy) || 1;
-  const cartAngle = Math.atan2(dy / len, dx / len) * (180 / Math.PI);
+  const pa = pts[Math.max(0, last - 1)];
+  const pb = pts[last];
+  const ddx = pb.x - pa.x, ddy = pb.y - pa.y;
+  const dlen = Math.sqrt(ddx * ddx + ddy * ddy) || 1;
+  const cartAngle = Math.atan2(ddy / dlen, ddx / dlen) * (180 / Math.PI);
 
-  // Track color based on direction
+  // Direction + color
   const goingUp = prices[last] >= prices[last - 1];
   const trackColor = goingUp ? '#00ff88' : '#ff4444';
 
-  // Vertical supports
+  // Volatility — sharp move in last 4 ticks triggers flare
+  const recentVol = prices.length >= 5
+    ? Math.abs(prices[last] - prices[last - 4]) / prices[last - 4]
+    : 0;
+  const isVolatile = recentVol > 0.012;
+
+  // Filled area under line
+  const areaPoints = [
+    ...pts,
+    { x: pts[last].x, y: iH },
+    { x: pts[0].x,    y: iH },
+  ];
+
+  // Support pillars
   const supports = [];
   for (let i = 0; i < pts.length; i += SUPPORT_INTERVAL) {
     supports.push({ x: pts[i].x, top: pts[i].y });
   }
 
-  // Price axis labels
+  // Price axis
   const PRICE_LABELS = 5;
   const priceLabels = Array.from({ length: PRICE_LABELS }, (_, i) => {
     const p = minP + (maxP - minP) * (i / (PRICE_LABELS - 1));
     return { p, y: toY(p) };
   });
+
+  // Progress bar
+  const progress = Math.min((prices.length - 1) / TOTAL_TICKS, 1);
 
   // Active bust lines
   const activeBets = (bets || []).filter(b => b.active);
@@ -94,6 +110,7 @@ export default function RollercoasterChart({ priceHistory, bets }) {
   }).filter(Boolean);
 
   const pointsStr = poly(pts);
+  const glowMult = isVolatile ? 2.2 : 1;
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
@@ -135,6 +152,10 @@ export default function RollercoasterChart({ priceHistory, bets }) {
               stroke="#111" strokeWidth={1} strokeDasharray="2,6" />
           ))}
 
+          {/* Filled area under line */}
+          <polygon points={poly(areaPoints)}
+            fill={trackColor} opacity={isVolatile ? 0.10 : 0.05} />
+
           {/* Bust lines */}
           {activeBets.map((b, i) => {
             const y = toY(b.bustPrice);
@@ -151,15 +172,24 @@ export default function RollercoasterChart({ priceHistory, bets }) {
             );
           })}
 
-          {/* Glow line — 4 layers: outermost to core */}
+          {/* Glow line — 4 layers, flare on volatility */}
           <polyline points={pointsStr} fill="none"
-            stroke={trackColor} strokeWidth={28} strokeLinejoin="round" strokeLinecap="round" opacity={0.04} />
+            stroke={trackColor} strokeWidth={28} strokeLinejoin="round" strokeLinecap="round"
+            opacity={0.04 * glowMult} />
           <polyline points={pointsStr} fill="none"
-            stroke={trackColor} strokeWidth={14} strokeLinejoin="round" strokeLinecap="round" opacity={0.12} />
+            stroke={trackColor} strokeWidth={14} strokeLinejoin="round" strokeLinecap="round"
+            opacity={0.12 * glowMult} />
           <polyline points={pointsStr} fill="none"
-            stroke={trackColor} strokeWidth={7}  strokeLinejoin="round" strokeLinecap="round" opacity={0.30} />
+            stroke={trackColor} strokeWidth={7}  strokeLinejoin="round" strokeLinecap="round"
+            opacity={0.30 * glowMult} />
           <polyline points={pointsStr} fill="none"
-            stroke={trackColor} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" opacity={1} />
+            stroke={trackColor} strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round"
+            opacity={1} />
+
+          {/* Progress bar — bottom of chart */}
+          <rect x={0} y={iH + 6} width={iW} height={3} rx={1} fill="#111" />
+          <rect x={0} y={iH + 6} width={iW * progress} height={3} rx={1}
+            fill={trackColor} opacity={0.7} />
 
           {/* Cart */}
           <g filter="url(#cartGlow)"
@@ -180,7 +210,14 @@ export default function RollercoasterChart({ priceHistory, bets }) {
             ))}
           </g>
 
-          {/* Entry markers — rendered last so always on top of everything */}
+          {/* Pulsing dot at cart tip */}
+          <circle cx={pts[last].x} cy={pts[last].y} r={6} fill={trackColor} opacity={0}>
+            <animate attributeName="r"       values="4;18;4"     dur="1.6s" repeatCount="indefinite" />
+            <animate attributeName="opacity" values="0.7;0;0.7"  dur="1.6s" repeatCount="indefinite" />
+          </circle>
+          <circle cx={pts[last].x} cy={pts[last].y} r={4} fill={trackColor} />
+
+          {/* Entry markers — always on top */}
           {markers.map((m, i) => {
             const poleLen = 55;
             const tipY    = m.up ? -poleLen : poleLen;
@@ -189,24 +226,19 @@ export default function RollercoasterChart({ priceHistory, bets }) {
             const labelH  = 14;
             return (
               <g key={i} transform={`translate(${m.x},${m.y})`}>
-                {/* Dot on the line */}
                 <circle cx={0} cy={0} r={5} fill={m.color} />
-                {/* Pole */}
                 <line x1={0} y1={0} x2={0} y2={tipY}
                   stroke={m.color} strokeWidth={1.5} opacity={0.9} />
-                {/* Arrowhead at tip */}
                 <polygon
                   points={m.up ? '0,0 6,10 -6,10' : '0,0 6,-10 -6,-10'}
                   transform={`translate(0,${tipY})`}
                   fill={m.color}
                 />
-                {/* Dark background behind label */}
                 <rect
                   x={-labelW / 2} y={labelY - labelH}
                   width={labelW} height={labelH + 3}
                   rx={2} fill="#000" opacity={0.85}
                 />
-                {/* Label text */}
                 <text x={0} y={labelY - 3} fill={m.color} fontSize={10} fontWeight="700"
                   textAnchor="middle" fontFamily="JetBrains Mono, monospace">
                   {m.label}
