@@ -1,6 +1,22 @@
 import { generateSeed, computeSeedHash, generateFullPath, seedToHex } from './priceEngine.js';
 import * as chain from './chainService.js';
 import config from './config.js';
+import { writeFileSync, readFileSync, rmSync, existsSync } from 'fs';
+
+const ROUND_STATE_FILE = './round-state.json';
+
+function saveRoundState(seed, seedHash, id) {
+  writeFileSync(ROUND_STATE_FILE, JSON.stringify({ seed, seedHash, roundId: id }));
+}
+
+function clearRoundState() {
+  rmSync(ROUND_STATE_FILE, { force: true });
+}
+
+function loadRoundState() {
+  if (!existsSync(ROUND_STATE_FILE)) return null;
+  try { return JSON.parse(readFileSync(ROUND_STATE_FILE, 'utf-8')); } catch { return null; }
+}
 
 const State = {
   IDLE: 'IDLE',
@@ -49,6 +65,26 @@ export async function startNewRound() {
     return;
   }
 
+  // Recover from a stuck active round caused by a previous server restart
+  const contractState = await chain.getContractRoundState();
+  if (contractState.state === 1 /* ACTIVE */) {
+    const saved = loadRoundState();
+    if (saved) {
+      console.log(`[game] Recovering stuck round ${contractState.roundId} with saved seed...`);
+      try {
+        await chain.endRound(saved.seed);
+        clearRoundState();
+        console.log(`[game] Stuck round settled. Starting fresh.`);
+      } catch (err) {
+        console.error('[game] Failed to settle stuck round:', err.message);
+        return;
+      }
+    } else {
+      console.error('[game] Contract has an active round but no saved seed — redeploy the contract to recover.');
+      return;
+    }
+  }
+
   currentSeed = generateSeed();
   currentSeedHash = computeSeedHash(currentSeed);
   pricePath = generateFullPath(currentSeed, config.startPrice);
@@ -60,6 +96,7 @@ export async function startNewRound() {
   try {
     const result = await chain.startRound(currentSeedHash);
     roundId = result.roundId;
+    saveRoundState(seedToHex(currentSeed), currentSeedHash, roundId);
   } catch (err) {
     console.error('[game] Failed to start round on-chain:', err.message);
     return;
@@ -150,6 +187,7 @@ async function endCurrentRound() {
 
   try {
     await chain.endRound(seedToHex(currentSeed));
+    clearRoundState();
   } catch (err) {
     console.error('[game] Failed to end round on-chain:', err.message);
   }

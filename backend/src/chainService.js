@@ -90,35 +90,44 @@ export async function getBet(betId) {
 }
 
 export function listenForBets(callback) {
-  contract.on('BetPlaced', (betId, agent, direction, multiplier, wager, entryPrice, bustPrice, event) => {
-    callback({
-      type: 'betPlaced',
-      betId: Number(betId),
-      agent,
-      direction: Number(direction),
-      multiplier: Number(multiplier),
-      wager: wager.toString(),
-      entryPrice: Number(entryPrice),
-      bustPrice: Number(bustPrice),
-    });
-  });
+  let lastBlock = 0;
 
-  contract.on('BetClosed', (betId, pnl, exitPrice, event) => {
-    callback({
-      type: 'betClosed',
-      betId: Number(betId),
-      pnl: pnl.toString(),
-      exitPrice: Number(exitPrice),
-    });
-  });
+  async function poll() {
+    try {
+      const currentBlock = await provider.getBlockNumber();
+      if (lastBlock === 0) { lastBlock = currentBlock; return; }
+      if (currentBlock <= lastBlock) return;
 
-  contract.on('BetLiquidated', (betId, bustPrice, event) => {
-    callback({
-      type: 'betLiquidated',
-      betId: Number(betId),
-      bustPrice: Number(bustPrice),
-    });
-  });
+      const [placed, closed, liquidated] = await Promise.all([
+        contract.queryFilter(contract.filters.BetPlaced(), lastBlock + 1, currentBlock),
+        contract.queryFilter(contract.filters.BetClosed(), lastBlock + 1, currentBlock),
+        contract.queryFilter(contract.filters.BetLiquidated(), lastBlock + 1, currentBlock),
+      ]);
+
+      for (const e of placed) {
+        callback({ type: 'betPlaced', betId: Number(e.args[0]), agent: e.args[1], direction: Number(e.args[2]), multiplier: Number(e.args[3]), wager: e.args[4].toString(), entryPrice: Number(e.args[5]), bustPrice: Number(e.args[6]) });
+      }
+      for (const e of closed) {
+        callback({ type: 'betClosed', betId: Number(e.args[0]), pnl: e.args[1].toString(), exitPrice: Number(e.args[2]) });
+      }
+      for (const e of liquidated) {
+        callback({ type: 'betLiquidated', betId: Number(e.args[0]), bustPrice: Number(e.args[1]) });
+      }
+
+      lastBlock = currentBlock;
+    } catch (err) {
+      console.error('[chain] Poll error:', err.message);
+    }
+  }
+
+  setInterval(poll, 2000);
+}
+
+export async function getContractRoundState() {
+  const roundId = await contract.currentRound();
+  if (roundId === 0n) return { roundId: 0, state: 0 };
+  const round = await contract.rounds(roundId);
+  return { roundId: Number(roundId), state: Number(round[3]) }; // 0=IDLE,1=ACTIVE,2=SETTLED
 }
 
 export async function getLeaderboard(addresses) {
