@@ -149,11 +149,14 @@ async function onTick() {
     return;
   }
 
-  // Submit next tick price on-chain
-  try {
-    await chain.submitTickPrice(currentTick, pricePath[currentTick]);
-  } catch (err) {
-    console.error(`[game] Failed to submit tick ${currentTick} price:`, err.message);
+  // Submit tick price on-chain every N ticks (not every tick, to save gas)
+  const isLastTick = currentTick >= config.roundTicks;
+  if (currentTick % config.priceSubmitInterval === 0 || isLastTick) {
+    try {
+      await chain.submitTickPrice(isLastTick ? config.roundTicks : currentTick, pricePath[isLastTick ? config.roundTicks : currentTick]);
+    } catch (err) {
+      console.error(`[game] Failed to submit tick ${currentTick} price:`, err.message);
+    }
   }
 }
 

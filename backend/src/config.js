@@ -9,6 +9,7 @@ export default {
   contractAddress: process.env.CONTRACT_ADDRESS || '',
   tickInterval: parseInt(process.env.TICK_INTERVAL || '1000'), // ms
   roundTicks: 120,
+  priceSubmitInterval: parseInt(process.env.PRICE_SUBMIT_INTERVAL || '5'), // submit on-chain every N ticks
   cooldownMs: parseInt(process.env.COOLDOWN_MS || '10000'),
   startPrice: 100000, // 1000.00 with 2 decimals
 };
