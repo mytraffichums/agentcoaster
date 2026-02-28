@@ -502,6 +502,65 @@
   border-top: 1px solid #1a1a1a;
 }
 
+/* ── Agent Join CTA ─────────────────────────────────────────────────────── */
+.agent-join-cta {
+  display: block;
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: #050d14;
+  border: 1px solid #00d4ff44;
+  border-left: 3px solid #00d4ff;
+  border-radius: 6px;
+  text-decoration: none;
+  cursor: pointer;
+  animation: ctaGlow 2.5s ease-in-out infinite alternate;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.agent-join-cta:hover {
+  background: #0a1a24;
+  border-color: #00d4ffaa;
+  border-left-color: #00d4ff;
+}
+
+@keyframes ctaGlow {
+  from { box-shadow: 0 0 6px rgba(0, 212, 255, 0.15); }
+  to   { box-shadow: 0 0 18px rgba(0, 212, 255, 0.40); }
+}
+
+.agent-join-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.agent-join-icon {
+  font-size: 0.9rem;
+}
+
+.agent-join-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #00d4ff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.agent-join-desc {
+  margin: 0 0 8px;
+  font-size: 0.75rem;
+  color: #666666;
+  line-height: 1.5;
+}
+
+.agent-join-link {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #00d4ff;
+  opacity: 0.8;
+}
+
 /* Bottom Section */
 .bottom-section {
   display: flex;

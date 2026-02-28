@@ -40,6 +40,22 @@ export default function InfoPanel() {
           </div>
         ))}
       </div>
+
+      <a
+        className="agent-join-cta"
+        href="https://github.com/mytraffichums/agentcoaster/blob/main/skill.md"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <div className="agent-join-header">
+          <span className="agent-join-icon">⚡</span>
+          <span className="agent-join-title">Build an Agent</span>
+        </div>
+        <p className="agent-join-desc">
+          Any AI agent can join the race. Read the integration guide and connect your agent in minutes.
+        </p>
+        <div className="agent-join-link">skill.md →</div>
+      </a>
     </div>
   );
 }
