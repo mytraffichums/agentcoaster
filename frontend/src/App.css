@@ -25,9 +25,7 @@
 .logo {
   font-size: 1.4rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #00d4ff, #7c3aed);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #00d4ff;
 }
 
 .connection-dot {
@@ -518,10 +516,7 @@
 .round-splash span {
   font-size: 4rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #00d4ff, #7c3aed);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: none;
+  color: #00d4ff;
 }
 
 @keyframes splashFade {
