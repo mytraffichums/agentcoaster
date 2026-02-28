@@ -1,0 +1,19 @@
+{
+  "name": "agentcoaster",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build:contracts": "cd contracts && forge build",
+    "test:contracts": "cd contracts && forge test -vv",
+    "start:backend": "node backend/src/server.js",
+    "start:frontend": "cd frontend && npx vite --host",
+    "deploy": "node scripts/deploy.js",
+    "fund-agents": "node scripts/fund-agents.js",
+    "demo": "node scripts/start-demo.js"
+  },
+  "dependencies": {
+    "ethers": "^6.16.0",
+    "ws": "^8.19.0"
+  }
+}
