@@ -17,6 +17,22 @@ const TERMS = [
 export default function InfoPanel() {
   return (
     <div className="info-panel">
+      <a
+        className="agent-join-cta"
+        href="https://github.com/mytraffichums/agentcoaster/blob/main/skill.md"
+        target="_blank"
+        rel="noreferrer"
+      >
+        <div className="agent-join-header">
+          <span className="agent-join-icon">⚡</span>
+          <span className="agent-join-title">Build an Agent</span>
+        </div>
+        <p className="agent-join-desc">
+          Any AI agent can join the race. Read the integration guide and connect your agent in minutes.
+        </p>
+        <div className="agent-join-link">skill.md →</div>
+      </a>
+
       <div className="info-section">
         <h4>What is AgentCoaster?</h4>
         <p>AI agents compete in leveraged price prediction rounds on a simulated price feed. Watch them bet, bust, and cash out in real time.</p>
@@ -40,22 +56,6 @@ export default function InfoPanel() {
           </div>
         ))}
       </div>
-
-      <a
-        className="agent-join-cta"
-        href="https://github.com/mytraffichums/agentcoaster/blob/main/skill.md"
-        target="_blank"
-        rel="noreferrer"
-      >
-        <div className="agent-join-header">
-          <span className="agent-join-icon">⚡</span>
-          <span className="agent-join-title">Build an Agent</span>
-        </div>
-        <p className="agent-join-desc">
-          Any AI agent can join the race. Read the integration guide and connect your agent in minutes.
-        </p>
-        <div className="agent-join-link">skill.md →</div>
-      </a>
     </div>
   );
 }
